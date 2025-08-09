@@ -1,0 +1,571 @@
+// PROJECT SCAFFOLD: UberClone
+// This document contains the suggested project structure and initial Dart files.
+// For each file below, create the corresponding file under the path indicated.
+
+// -----------------------------
+// FILE: lib/main.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+import 'core/theme/app_theme.dart';
+import 'core/routes/app_routes.dart';
+import 'presentation/screens/splash/splash_screen.dart';
+
+void main() {
+  runApp(const UberCloneApp());
+}
+
+class UberCloneApp extends StatelessWidget {
+  const UberCloneApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Uber Clone',
+      theme: AppTheme.lightTheme,
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/core/theme/app_theme.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+import 'colors.dart';
+
+class AppTheme {
+  static final ThemeData lightTheme = ThemeData(
+    fontFamily: 'Inter',
+    scaffoldBackgroundColor: Colors.white,
+    splashFactory: NoSplash.splashFactory,
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      },
+    ),
+    colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+    primaryColor: AppColors.primary,
+    appBarTheme: const AppBarTheme(backgroundColor: Colors.white, elevation: 0, iconTheme: IconThemeData(color: Colors.black)),
+  );
+}
+
+// -----------------------------
+// FILE: lib/core/theme/colors.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+
+class AppColors {
+  static const Color primary = Color(0xFF000000);
+  static const Color background = Color(0xFFFFFFFF);
+  static const Color accent = Color(0xFF0052FF);
+}
+
+
+// -----------------------------
+// FILE: lib/core/routes/app_routes.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import '../../presentation/screens/splash/splash_screen.dart';
+import '../../presentation/screens/auth/login_screen.dart';
+import '../../presentation/screens/role/role_selection_screen.dart';
+import '../../presentation/screens/passenger/passenger_home_screen.dart';
+import '../../presentation/screens/driver/document_upload_screen.dart';
+
+class AppRoutes {
+  static const String splash = '/';
+  static const String login = '/login';
+  static const String role = '/role';
+  static const String passengerHome = '/passenger Home';
+  static const String driverDocs = '/driver/docs';
+
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case splash:
+        return MaterialPageRoute(builder: (_) => const SplashScreen());
+      case login:
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
+      case role:
+        return MaterialPageRoute(builder: (_) => const RoleSelectionScreen());
+      case passengerHome:
+        return MaterialPageRoute(builder: (_) => const PassengerHomeScreen());
+      case driverDocs:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(builder: (_) => DocumentUploadScreen.fromArgs(args));
+      default:
+        return null;
+    }
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/data/models/driver.dart
+// -----------------------------
+class Driver {
+  final String id;
+  final String name;
+  final String carModel;
+  final double rating;
+  final double price;
+  final int eta;
+
+  Driver({
+    required this.id,
+    required this.name,
+    required this.carModel,
+    required this.rating,
+    required this.price,
+    required this.eta,
+  });
+
+  factory Driver.fromJson(Map<String, dynamic> json) => Driver(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        carModel: json['carModel'] as String? ?? '',
+        rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+        price: (json['price'] as num?)?.toDouble() ?? 0.0,
+        eta: (json['eta'] as num?)?.toInt() ?? 0,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'carModel': carModel,
+        'rating': rating,
+        'price': price,
+        'eta': eta,
+      };
+}
+
+
+// -----------------------------
+// FILE: lib/data/repositories/driver_repository.dart
+// -----------------------------
+import '../models/driver.dart';
+
+class DriverRepository {
+  // TODO: Replace mock with real API service
+  Future<List<Driver>> fetchAvailableDrivers({int limit = 10}) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return List.generate(limit, (i) {
+      return Driver(
+        id: 'driver_$i',
+        name: 'Motorista $i',
+        carModel: 'Modelo ${2020 + (i % 4)}',
+        rating: 4.5 + (i % 5) * 0.1,
+        price: 20 + i.toDouble(),
+        eta: 2 + i,
+      );
+    });
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/presentation/widgets/animated_button.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+
+class AnimatedButton extends StatefulWidget {
+  final String text;
+  final VoidCallback onPressed;
+  final int delay;
+
+  const AnimatedButton({super.key, required this.text, required this.onPressed, this.delay = 0});
+
+  @override
+  State<AnimatedButton> createState() => _AnimatedButtonState();
+}
+
+class _AnimatedButtonState extends State<AnimatedButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _scaleAnimation = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+    Future.delayed(Duration(milliseconds: widget.delay), () => _controller.forward());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: GestureDetector(
+          onTapDown: (_) => setState(() => _isPressed = true),
+          onTapUp: (_) {
+            setState(() => _isPressed = false);
+            widget.onPressed();
+          },
+          onTapCancel: () => setState(() => _isPressed = false),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: widget.onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(widget.text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/presentation/widgets/animated_text_field.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+
+class AnimatedTextField extends StatefulWidget {
+  final String label;
+  final bool obscureText;
+  final int delay;
+
+  const AnimatedTextField({super.key, required this.label, this.obscureText = false, this.delay = 0});
+
+  @override
+  State<AnimatedTextField> createState() => _AnimatedTextFieldState();
+}
+
+class _AnimatedTextFieldState extends State<AnimatedTextField> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: const Duration(milliseconds: 600), vsync: this);
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    Future.delayed(Duration(milliseconds: widget.delay), () { if (mounted) _controller.forward(); });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideTransition(
+      position: _animation.drive(Tween(begin: const Offset(-0.5, 0), end: Offset.zero)),
+      child: FadeTransition(
+        opacity: _animation,
+        child: TextField(
+          obscureText: widget.obscureText,
+          style: const TextStyle(color: Colors.black, fontSize: 16),
+          decoration: InputDecoration(
+            labelText: widget.label,
+            labelStyle: TextStyle(color: Colors.grey[600]),
+            filled: true,
+            fillColor: Colors.grey[200],
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/presentation/screens/splash/splash_screen.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+import '../../widgets/animated_button.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _logoController;
+  late AnimationController _textController;
+  late Animation<double> _logoAnimation;
+  late Animation<double> _textAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _logoController = AnimationController(duration: const Duration(milliseconds: 1500), vsync: this);
+    _textController = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
+    _logoAnimation = CurvedAnimation(parent: _logoController, curve: Curves.elasticOut);
+    _textAnimation = CurvedAnimation(parent: _textController, curve: Curves.easeInOut);
+    _logoController.forward();
+    Future.delayed(const Duration(milliseconds: 800), () { if (mounted) _textController.forward(); });
+    Future.delayed(const Duration(seconds: 3), () { if (mounted) Navigator.of(context).pushReplacementNamed('/login'); });
+  }
+
+  @override
+  void dispose() {
+    _logoController.dispose();
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ScaleTransition(scale: _logoAnimation, child: Container(width: 120, height: 120, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25)), child: const Icon(Icons.local_taxi, size: 70, color: Colors.black))),
+            const SizedBox(height: 30),
+            FadeTransition(opacity: _textAnimation, child: const Text('UBER', style: TextStyle(color: Colors.white, fontSize: 45, fontWeight: FontWeight.bold, letterSpacing: 8),)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/presentation/screens/auth/login_screen.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+import '../../widgets/animated_text_field.dart';
+import '../../widgets/animated_button.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+  bool _showLoginPage = true;
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(duration: const Duration(milliseconds: 600), vsync: this);
+    _slideController = AnimationController(duration: const Duration(milliseconds: 400), vsync: this);
+    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
+    _fadeController.forward();
+    _slideController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  void _togglePage() => setState(() => _showLoginPage = !_showLoginPage);
+  void _navigateToRoleSelection() => Navigator.of(context).pushNamed('/role');
+  void _navigateToHome() => Navigator.of(context).pushReplacementNamed('/passenger Home');
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 500),
+                transitionBuilder: (child, animation) => SlideTransition(position: animation.drive(Tween(begin: const Offset(0.0, 0.5), end: Offset.zero).chain(CurveTween(curve: Curves.easeOut))), child: FadeTransition(opacity: animation, child: child)),
+                child: _showLoginPage ? _buildLoginForm() : _buildRegisterForm(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginForm() {
+    return Column(
+      key: const ValueKey('login'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TweenAnimationBuilder<double>(tween: Tween(begin: 0, end: 1), duration: const Duration(milliseconds: 800), builder: (context, value, child) { return Opacity(opacity: value, child: Transform.translate(offset: Offset(0, 20 * (1 - value)), child: const Text('Continue com o seu email', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),),),); },),
+        const SizedBox(height: 48),
+        AnimatedTextField(label: 'Email', delay: 200),
+        const SizedBox(height: 24),
+        AnimatedTextField(label: 'Senha', obscureText: true, delay: 400),
+        const SizedBox(height: 32),
+        AnimatedButton(text: 'Entrar', onPressed: _navigateToHome, delay: 600),
+        const SizedBox(height: 24),
+        _buildToggleText(text: 'Não tem uma conta? ', linkText: 'Registe-se', onTap: _togglePage),
+      ],
+    );
+  }
+
+  Widget _buildRegisterForm() {
+    return Column(
+      key: const ValueKey('register'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text('Crie a sua conta', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black)),
+        const SizedBox(height: 48),
+        AnimatedTextField(label: 'Nome Completo', delay: 200),
+        const SizedBox(height: 24),
+        AnimatedTextField(label: 'Email', delay: 400),
+        const SizedBox(height: 24),
+        AnimatedTextField(label: 'Senha', obscureText: true, delay: 600),
+        const SizedBox(height: 32),
+        AnimatedButton(text: 'Criar Conta', onPressed: _navigateToRoleSelection, delay: 800),
+        const SizedBox(height: 24),
+        _buildToggleText(text: 'Já tem uma conta? ', linkText: 'Faça login', onTap: _togglePage),
+      ],
+    );
+  }
+
+  Widget _buildToggleText({required String text, required String linkText, required VoidCallback onTap}) {
+    return Center(child: GestureDetector(onTap: onTap, child: RichText(text: TextSpan(style: TextStyle(color: Colors.grey[700], fontSize: 16, fontFamily: 'Inter'), children: [TextSpan(text: text), TextSpan(text: linkText, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),],),),),);
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/presentation/screens/role/role_selection_screen.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+
+class RoleSelectionScreen extends StatelessWidget {
+  const RoleSelectionScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(backgroundColor: Colors.white, elevation: 0, leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.of(context).pop())),
+      body: Padding(padding: const EdgeInsets.all(24.0), child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const Text('Como quer usar a app?', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black)),
+        const SizedBox(height: 48),
+        ElevatedButton(onPressed: () => Navigator.of(context).pushReplacementNamed('/passenger Home'), child: const Text('Passageiro')),
+        const SizedBox(height: 24),
+        ElevatedButton(onPressed: () => Navigator.of(context).pushNamed('/driver/docs'), child: const Text('Motorista')),
+      ],),),
+    );
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/presentation/screens/passenger/passenger_home_screen.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+
+class PassengerHomeScreen extends StatelessWidget {
+  const PassengerHomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: const Drawer(),
+      backgroundColor: Colors.black,
+      body: const Center(child: Text('Passenger Home - placeholder', style: TextStyle(color: Colors.white))),
+    );
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/presentation/screens/driver/document_upload_screen.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+
+class DocumentUploadScreen extends StatelessWidget {
+  final String? title;
+  final String? subtitle;
+  final bool isFinalStep;
+
+  const DocumentUploadScreen({super.key, this.title, this.subtitle, this.isFinalStep = false});
+
+  // helper to construct from route args
+  factory DocumentUploadScreen.fromArgs(Map<String, dynamic>? args) {
+    return DocumentUploadScreen(title: args?['title'] as String?, subtitle: args?['subtitle'] as String?, isFinalStep: args?['isFinalStep'] as bool? ?? false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(backgroundColor: Colors.white, elevation: 0, leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.of(context).pop())),
+      body: Padding(padding: const EdgeInsets.all(24.0), child: Column(children: [Text(title ?? 'Documento', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)), const SizedBox(height: 16), Text(subtitle ?? ''), const Spacer(), ElevatedButton(onPressed: () => Navigator.of(context).pushReplacementNamed('/driver/docs'), child: Text(isFinalStep ? 'Concluir' : 'Continuar'))])),
+    );
+  }
+}
+
+
+// -----------------------------
+// FILE: lib/state/ride_state.dart
+// -----------------------------
+import 'package:flutter/material.dart';
+import '../data/models/driver.dart';
+import '../data/repositories/driver_repository.dart';
+
+class RideState extends ChangeNotifier {
+  final DriverRepository _driverRepository = DriverRepository();
+  List<Driver> availableDrivers = [];
+  bool isLoading = false;
+
+  Future<void> loadDrivers() async {
+    isLoading = true;
+    notifyListeners();
+    availableDrivers = await _driverRepository.fetchAvailableDrivers(limit: 10);
+    isLoading = false;
+    notifyListeners();
+  }
+}
+
+
+// -----------------------------
+// FILE: README.md
+// -----------------------------
+# UberClone - Arquitetura e Código Inicial
+
+Este documento contém o scaffold inicial e os arquivos principais para mover seu código atual em pequenos módulos.
+
+## Próximos passos
+- Copiar cada seção para o respectivo arquivo em `lib/`.
+- Mover widgets e animações repetidas para `presentation/widgets` e `presentation/animations`.
+- Implementar Provider ou Riverpod e registrar `RideState` no topo do app.
+- Substituir `DriverRepository` pelos serviços reais (API / WebSocket).
+
+
+// End of scaffold

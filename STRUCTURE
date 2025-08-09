@@ -1,0 +1,44 @@
+lib/
+ ├── main.dart
+ ├── core/
+ │    ├── theme/
+ │    │    ├── app_theme.dart
+ │    │    └── colors.dart
+ │    ├── routes/app_routes.dart
+ │    └── utils/helpers.dart
+ ├── data/
+ │    ├── models/
+ │    │    └── driver.dart
+ │    ├── repositories/
+ │    │    └── driver_repository.dart
+ │    └── services/
+ │         └── location_service.dart
+ ├── presentation/
+ │    ├── screens/
+ │    │    ├── splash/splash_screen.dart
+ │    │    ├── auth/login_screen.dart
+ │    │    ├── auth/register_screen.dart
+ │    │    ├── role/role_selection_screen.dart
+ │    │    ├── passenger/passenger_home_screen.dart
+ │    │    ├── driver/document_upload_screen.dart
+ │    │    ├── ride/search_screen.dart
+ │    │    ├── ride/ride_options_screen.dart
+ │    │    ├── ride/driver_selection_screen.dart
+ │    │    ├── ride/waiting_for_driver_screen.dart
+ │    │    ├── ride/driver_en_route_screen.dart
+ │    │    ├── ride/on_trip_screen.dart
+ │    │    └── ride/rating_screen.dart
+ │    ├── widgets/
+ │    │    ├── animated_button.dart
+ │    │    ├── animated_text_field.dart
+ │    │    ├── animated_map.dart
+ │    │    ├── bouncing_widget.dart
+ │    │    ├── pulsing_widget.dart
+ │    │    └── ...
+ │    └── animations/
+ │         ├── slide_in_button.dart
+ │         ├── animated_price_tag.dart
+ │         └── ...
+ └── state/
+      ├── app_state.dart
+      └── ride_state.dart
